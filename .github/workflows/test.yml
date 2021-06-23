@@ -2,33 +2,34 @@ name: Test
 on:
   push:
   schedule:
-    - cron: "*/15 * * * *"
+    - cron: "42 * * * *"
 jobs:
   build:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
+      max-parallel: 2
       matrix:
         os:
           # Heroku-18
           - ubuntu-18.04
           # Heroku-20
           - ubuntu-20.04
-        withCache: [true, false]
-        customURL: [true, false]
+        cache: ["withoutCache", "withCache"]
+        env: ["defaultURL", "customURL"]
     env:
       BUILD_DIR: test_build
       CACHE_DIR: test_cache
       ENV_DIR: test_env
     steps:
       - uses: actions/checkout@v2
-      - if: ${{ matrix.withCache == true }}
+      - if: ${{ matrix.cache == "withCache" }}
         uses: actions/cache@v2
         with:
           path: ${{ env.CACHE_DIR }}
           key: ffmpeg-archive
       - run: mkdir -p $BUILD_DIR $CACHE_DIR $ENV_DIR
-      - if: ${{ matrix.customURL == true }}
+      - if: ${{ matrix.env == "customURL" }}
         run: echo "https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz" >> $ENV_DIR/FFMPEG_DOWNLOAD_URL
       - run: ./bin/detect $(realpath $BUILD_DIR)
       - run: ./bin/compile $(realpath $BUILD_DIR) $(realpath $CACHE_DIR) $(realpath $ENV_DIR)
