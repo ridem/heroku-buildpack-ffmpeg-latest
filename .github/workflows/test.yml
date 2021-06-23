@@ -29,6 +29,6 @@ jobs:
       - run: mkdir -p $BUILD_DIR $CACHE_DIR $ENV_DIR
       - if: ${{ matrix.customURL == true }}
         run: echo "https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz" >> $ENV_DIR/FFMPEG_DOWNLOAD_URL
-      - run: ./bin/detect (realpath $BUILD_DIR)
-      - run: ./bin/compile (realpath $BUILD_DIR) (realpath $CACHE_DIR) (realpath $ENV_DIR)
+      - run: ./bin/detect $(realpath $BUILD_DIR)
+      - run: ./bin/compile $(realpath $BUILD_DIR) $(realpath $CACHE_DIR) $(realpath $ENV_DIR)
       - run: $BUILD_DIR/vendor/ffmpeg/ffmpeg -version
