@@ -8,6 +8,8 @@ Scheduled: [![Test](https://github.com/jonathanong/heroku-buildpack-ffmpeg-lates
 A Heroku buildpack for ffmpeg that always downloads the latest [static build](http://johnvansickle.com/ffmpeg/).
 Unlike other build packs, I never compile anything.
 
+If the static build can't be downloaded, the last version from the cache will be used.
+
 ## Usage
 
 Run the following from the heroku command line:
