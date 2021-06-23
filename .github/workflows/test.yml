@@ -27,7 +27,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ${{ env.CACHE_DIR }}
-          key: ffmpeg-archive
+          key: ffmpeg-archive-${{ matrix.env }}
       - run: mkdir -p $BUILD_DIR $CACHE_DIR $ENV_DIR
       - if: ${{ matrix.env == 'customURL' }}
         run: echo "https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz" >> $ENV_DIR/FFMPEG_DOWNLOAD_URL
