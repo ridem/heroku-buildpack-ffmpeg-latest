@@ -20,40 +20,53 @@ output() {
 header "Installing ffmpeg"
 
 BUILD_DIR=${1:-}
-VENDOR_DIR="vendor"
+CACHE_DIR=${2:-}
+ENV_DIR=${3:-}
+
+VENDOR_FFMPEG_DIR="vendor/ffmpeg"
 FFMPEG_ARCHIVE_NAME="ffmpeg.tar.xz"
+CACHED_FFMPEG_ARCHIVE_PATH="$CACHE_DIR/$FFMPEG_ARCHIVE_NAME"
 
 cd $BUILD_DIR
-mkdir -p $VENDOR_DIR
-cd $VENDOR_DIR
-mkdir -p ffmpeg
-cd ffmpeg
+mkdir -p $VENDOR_FFMPEG_DIR
+cd $VENDOR_FFMPEG_DIR
 
-if [[ -z $FFMPEG_DOWNLOAD_URL ]]; then
+if [[ -e $ENV_DIR/FFMPEG_DOWNLOAD_URL ]]; then
+  FFMPEG_DOWNLOAD_URL=$(cat $ENV_DIR/FFMPEG_DOWNLOAD_URL)
+else
   echo "Variable FFMPEG_DOWNLOAD_URL isn't set, using default value" | output
   FFMPEG_DOWNLOAD_URL="https://johnvansickle.com/ffmpeg/builds/ffmpeg-git-amd64-static.tar.xz"
 fi
 
 echo "Downloading $FFMPEG_DOWNLOAD_URL" | output
 
-code=$(curl "$FFMPEG_DOWNLOAD_URL" -L --silent --fail --retry 5 --retry-max-time 15 -o ./$FFMPEG_ARCHIVE_NAME --write-out "%{http_code}")
+code=$(curl "$FFMPEG_DOWNLOAD_URL" -L  --silent --show-error --fail --retry 5 --retry-max-time 15 -o $FFMPEG_ARCHIVE_NAME --write-out "%{http_code}")
 
 if [ "$code" != "200" ]; then
-  echo "Unable to download ffmpeg: $code" | output && exit 1
+
+  if [[ -e $CACHED_FFMPEG_ARCHIVE_PATH ]]; then
+    cp $CACHED_FFMPEG_ARCHIVE_PATH .
+    echo "Couldn't download ffmpeg, using the latest download from the cache" | output
+  else
+    echo "Unable to download ffmpeg" | output && exit 1
+  fi
+  
+else
+  cp $FFMPEG_ARCHIVE_NAME $CACHED_FFMPEG_ARCHIVE_PATH
 fi
 
 echo "Unpacking the archive" | output
 
-tar xJf "./$FFMPEG_ARCHIVE_NAME" --strip-components=1
+tar xJf $FFMPEG_ARCHIVE_NAME --strip-components=1
 
-if [ "$?" != "0" ]; then
+if [ $? -ne 0 ]; then
   echo "Failed to unpack" | output && exit 1
 fi
 
 rm $FFMPEG_ARCHIVE_NAME
 
-PROFILE_PATH="$BUILD_DIR/.profile.d/ffmpeg.sh"
-mkdir -p $(dirname $PROFILE_PATH)
-echo 'export PATH="$PATH:${HOME}/vendor/ffmpeg"' >> $PROFILE_PATH
+PROFILE_DIR=$BUILD_DIR/.profile.d
+mkdir -p $PROFILE_DIR
+echo "export PATH="\$PATH:\${HOME}/$VENDOR_FFMPEG_DIR"" >> $PROFILE_DIR/ffmpeg.sh
 
 echo "Installation successful" | output
